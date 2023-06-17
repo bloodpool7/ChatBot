@@ -3,7 +3,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Pinecone
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.llms import OpenAI 
-from langchain.chains.question_answering import load_qa_chain
+from langchain.chains import ConversationalRetrievalChain
 import os
 import pinecone
 
@@ -15,14 +15,19 @@ pinecone.init(
     api_key=PINECONE_API_KEY,
     environment=PINECONE_ENV
 )
-index_name = "INDEX_NAME"
+index_name = "project2"
 
 embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
 
 vectorstore = Pinecone.from_existing_index(index_name=index_name, embedding=embeddings)
 
-llm = OpenAI(temperature = 0, openai_api_key = OPENAI_API_KEY)
-chain = load_qa_chain(llm, chain_type = "stuff")
+qa = ConversationalRetrievalChain.from_llm(
+    llm=OpenAI(temperature=0, openai_api_key = OPENAI_API_KEY), 
+    retriever=vectorstore.as_retriever(),
+    return_source_documents=True,
+)
+
+chat_history = []
 
 def load_pdfs_to_pinecone(directory: str):
     """
@@ -35,13 +40,16 @@ def load_pdfs_to_pinecone(directory: str):
                 chunk_size=1000,
                 chunk_overlap=0
             )
-            texts = splitter.split(loader.load())
+            texts = splitter.split_documents(loader.load())
+            print(texts)
             Pinecone.from_texts([t.page_content for t in texts], embeddings, index_name=index_name)
 
 def query_documents(query: str):
     """
     Query the Pinecone index for documents that match the query.
     """
-    doc = vectorstore.similarity_search(query)
-    result = chain.run(input_documents = doc, question = query) 
+    result = qa({'question': query, 'chat_history': chat_history})
+    chat_history.append((query, result['answer']))
     return result
+
+print(query_documents("What is generalization?")['answer'])
