@@ -7,7 +7,7 @@ import pandas as pd
 openai_api_key = os.environ["OPENAI_API_KEY"]
 pinecone_api_key = os.environ["PINECONE_API_KEY"]
 pinecone_env = os.environ["PINECONE_ENV"]
-namespace = "Policies"
+namespace = st.session_state['namespace']
 
 st.set_page_config(page_title="Complete csvs")
 
@@ -25,5 +25,5 @@ if file:
     
     df["answer"] = answers
     st.dataframe(df, width = 500, height = 500)
-    st.download_button("Download csv", data = df.to_csv(), file_name = file.name[:-4] + "_completed.csv", mime = "text/csv")
+    st.download_button("Download completed csv ", data = df.to_csv(), file_name = file.name[:-4] + "_completed.csv", mime = "text/csv")
 

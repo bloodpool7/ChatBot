@@ -35,7 +35,7 @@ def add_pdfs(files: list, namespace: str, openai_api_key: str = None, pinecone_a
                 [t.page_content for t in texts], 
                 embeddings, 
                 index_name=index_name, 
-                metadatas = [{'id': hash_pdf(open(file, "rb").read())} for t in texts], 
+                metadatas = [{'id': hash_pdf(open(file, "rb").read()), "title" : file} for t in texts], 
                 namespace = namespace
             )
     else:
@@ -52,7 +52,7 @@ def add_pdfs(files: list, namespace: str, openai_api_key: str = None, pinecone_a
                 [t.page_content for t in texts], 
                 embeddings, 
                 index_name=index_name, 
-                metadatas = [{'id': hash_pdf(file.getvalue())} for t in texts], 
+                metadatas = [{'id': hash_pdf(file.getvalue()), "title" : file.name} for t in texts], 
                 namespace = namespace
             )
 
@@ -78,10 +78,10 @@ def delete_pdfs(files: list[str] = [], is_id = False, namespace: str = None, pin
 
     if (type(files[0]) == str):
         for file in files:
-            index.delete(filter = {"id": hash_pdf(open(file, "rb").read())}, namespace = namespace)
+            index.delete(filter = {"title": file}, namespace = namespace)
     else:
         for file in files:
-            index.delete(filter = {"id": hash_pdf(file.getvalue())}, namespace = namespace)
+            index.delete(filter = {"title": file.name}, namespace = namespace)
 
 
 def update_pdfs(files: list[str], namespace: str, openai_api_key: str = None, pinecone_api_key: str = None, pinecone_env: str = None, index_name: str = None):
